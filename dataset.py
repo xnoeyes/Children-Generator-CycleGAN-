@@ -47,17 +47,13 @@ class KinFaceDataset(Dataset):
         parent_image_path, child_image_path, parent_gender, child_gender = self.pairs[idx]
         parent_image = Image.open(parent_image_path).convert('RGB')
         child_image = Image.open(child_image_path).convert('RGB')
-
-    # Albumentations transform을 사용하려면 이미지를 numpy 배열로 변환
         parent_image = np.array(parent_image)
         child_image = np.array(child_image)
 
         if self.transform:
-        # Albumentations는 딕셔너리 형태로 반환하므로, 'image' 키를 사용해 이미지 추출
             parent_image = self.transform(image=parent_image)["image"]
             child_image = self.transform(image=child_image)["image"]
 
-    # Convert gender to one-hot encoding
         parent_gender_onehot = torch.tensor([1, 0]) if parent_gender == 'male' else torch.tensor([0, 1])
         child_gender_onehot = torch.tensor([1, 0]) if child_gender == 'male' else torch.tensor([0, 1])
 
