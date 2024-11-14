@@ -14,7 +14,6 @@ def load_checkpoint(checkpoint_file, model, optimizer=None, lr=None):
     checkpoint = torch.load(checkpoint_file, map_location=config.DEVICE)
     model.load_state_dict(checkpoint["state_dict"])
     
-    # 옵티마이저가 제공되었을 때만 로드
     if optimizer is not None:
         optimizer.load_state_dict(checkpoint["optimizer"])
         if lr is not None:
