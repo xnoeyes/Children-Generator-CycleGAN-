@@ -11,11 +11,8 @@ from tqdm import tqdm
 from discriminator import Discriminator
 from generator import Generator
 
-# 학습 함수 정의
 def train_func(disc_P, disc_C, gen_P, gen_C, opt_disc, opt_gen, g_scaler, d_scaler, L1, mse, loader, epoch):
-    loop = tqdm(loader, leave=True)  # 진행바 설정
-
-    # 이미지 저장 디렉토리 확인 및 생성
+    loop = tqdm(loader, leave=True)  
     os.makedirs('saved_images', exist_ok=True)
 
     for idx, (parent_image, child_image, parent_gender, child_gender) in enumerate(loop):
@@ -80,26 +77,19 @@ def train_func(disc_P, disc_C, gen_P, gen_C, opt_disc, opt_gen, g_scaler, d_scal
         print(f"[Epoch {epoch+1}/{config.NUM_EPOCHS}] [Batch {idx+1}/{len(loader)}] "
               f"[D loss: {D_loss.item():.4f}] [G loss: {G_loss.item():.4f}]")
         
-        # 10번째 에포크 이미지 저장
         if epoch % 10 == 0:
             save_image(parent_image * 0.5 + 0.5, f"saved_images/parent_epoch_{epoch}.png")
             save_image(fake_child * 0.5 + 0.5, f"saved_images/fake_child_epoch_{epoch}.png")
             save_image(child_image * 0.5 + 0.5, f"saved_images/child_epoch_{epoch}.png")
             save_image(fake_parent * 0.5 + 0.5, f"saved_images/fake_parent_epoch_{epoch}.png")
 
-
-# 메인 함수 정의
 def main():
     config.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 장치 설정을 메인 함수에서 수행
-
-    # 판별기 및 생성기 초기화
     disc_P = Discriminator(input_channels=3, condition_dim=4).to(config.DEVICE)
     disc_C = Discriminator(input_channels=3, condition_dim=4).to(config.DEVICE)
     gen_P = Generator(input_channels=3, condition_dim=4, num_residuals=9).to(config.DEVICE)
     gen_C = Generator(input_channels=3, condition_dim=4, num_residuals=9).to(config.DEVICE)
 
-
-    # 옵티마이저 설정
     opt_disc = optim.Adam(
         list(disc_P.parameters()) + list(disc_C.parameters()),
         lr=config.LEARNING_RATE,
@@ -113,7 +103,6 @@ def main():
     L1 = nn.L1Loss()  # L1 손실 함수 정의
     mse = nn.MSELoss()  # MSE 손실 함수 정의
 
-    # 모델을 로드할 경우 체크포인트 로드
     if config.LOAD_MODEL:
         load_checkpoint(config.CHECKPOINT_GEN_P, gen_P, opt_gen, config.LEARNING_RATE)
         load_checkpoint(config.CHECKPOINT_GEN_C, gen_C, opt_gen, config.LEARNING_RATE)
@@ -122,22 +111,13 @@ def main():
     
     # KinFaceDataset을 사용하여 데이터셋 로드
     dataset = KinFaceDataset(root_dir=config.TRAIN_DIR, transform=config.transforms)
-
-
-    # 데이터셋 크기
     dataset_size = len(dataset)
-    # 분할 비율 설정
     train_size = int(0.8 * dataset_size)
     val_size = dataset_size - train_size
-
-    # 데이터셋 분할
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
-
     batch_size = config.BATCH_SIZE
-
     config.DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # 데이터로더 설정
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
 
@@ -145,11 +125,9 @@ def main():
     d_scaler = torch.amp.GradScaler()  # 판별기 그래디언트 스케일러 설정
 
 
-     # 에포크 반복
     for epoch in range(config.NUM_EPOCHS):
         train_func(disc_P, disc_C, gen_P, gen_C, opt_disc, opt_gen, g_scaler, d_scaler, L1, mse, train_loader, epoch)
 
-        # 모델을 저장할 경우 체크포인트 저장
         if config.SAVE_MODEL:
             save_checkpoint(gen_P, opt_gen, filename=config.CHECKPOINT_GEN_P)
             save_checkpoint(gen_C, opt_gen, filename=config.CHECKPOINT_GEN_C)
@@ -158,4 +136,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()  # 메인 함수 실행
+    main() 
